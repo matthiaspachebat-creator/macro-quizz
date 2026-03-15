@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macroeconomics 2 — Quiz</title>
+<style>
+  :root {
+    --navy:   #1B3A6B;
+    --blue:   #2C5F9E;
+    --ltblue: #EBF2FC;
+    --gold:   #B8860B;
+    --green:  #1a7a4a;
+    --red:    #9B1C1C;
+    --ltgreen:#d4edda;
+    --ltred:  #f8d7da;
+    --grey:   #f5f5f5;
+    --dgrey:  #444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f8;
+    color: #222;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 28px 32px 22px;
+    text-align: center;
+  }
+  header h1 { font-size: 1.8rem; letter-spacing: .5px; }
+  header p  { font-size: .95rem; opacity: .8; margin-top: 6px; }
+
+  /* ── Progress bar ── */
+  #progress-wrap {
+    background: rgba(255,255,255,.2);
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 14px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%;
+    background: #f0c040;
+    border-radius: 3px;
+    transition: width .4s ease;
+    width: 0%;
+  }
+
+  /* ── Score bar ── */
+  #score-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    background: white;
+    border-bottom: 1px solid #dde4ee;
+    padding: 10px 32px;
+    font-size: .9rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .stat { display: flex; align-items: center; gap: 6px; }
+  .stat-num { font-weight: 700; font-size: 1.1rem; }
+  .stat-num.correct { color: var(--green); }
+  .stat-num.wrong   { color: var(--red); }
+  .stat-num.pending { color: var(--blue); }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 780px;
+    margin: 32px auto;
+    padding: 0 16px 60px;
+  }
+
+  /* ── Chapter badge ── */
+  .chapter-badge {
+    display: inline-block;
+    background: var(--navy);
+    color: white;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Question card ── */
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 30px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    margin-bottom: 28px;
+    border-left: 4px solid var(--blue);
+    transition: border-color .3s;
+  }
+  .card.answered-correct { border-left-color: var(--green); }
+  .card.answered-wrong   { border-left-color: var(--red); }
+
+  .q-number {
+    font-size: .8rem;
+    color: var(--dgrey);
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .q-text {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  .q-text .math {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    color: #333;
+  }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 15px;
+    border: 1.5px solid #d0d8e8;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    font-size: .97rem;
+    line-height: 1.45;
+  }
+  .opt:hover:not(.disabled) { background: var(--ltblue); border-color: var(--blue); }
+  .opt-letter {
+    min-width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--ltblue);
+    color: var(--navy);
+    font-weight: 700;
+    font-size: .85rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .2s, color .2s;
+  }
+  .opt.correct-ans  { background: var(--ltgreen); border-color: var(--green); }
+  .opt.correct-ans  .opt-letter { background: var(--green); color: white; }
+  .opt.wrong-ans    { background: var(--ltred);   border-color: var(--red); }
+  .opt.wrong-ans    .opt-letter { background: var(--red); color: white; }
+  .opt.show-correct { background: var(--ltgreen); border-color: var(--green); opacity: .7; }
+  .opt.show-correct .opt-letter { background: var(--green); color: white; }
+  .opt.disabled     { cursor: default; }
+
+  /* ── Explanation ── */
+  .explanation {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: .93rem;
+    line-height: 1.6;
+  }
+  .explanation.correct { background: #e8f5ee; border-left: 4px solid var(--green); color: #1a4a30; }
+  .explanation.wrong   { background: #fdf0f0; border-left: 4px solid var(--red);   color: #5a1010; }
+  .explanation .verdict { font-weight: 700; margin-bottom: 4px; font-size: 1rem; }
+
+  /* ── Results screen ── */
+  #results {
+    display: none;
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 48px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.1);
+  }
+  #results h2 { font-size: 1.6rem; color: var(--navy); margin-bottom: 8px; }
+  #score-display {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 24px 0 8px;
+  }
+  #score-pct { font-size: 1.1rem; color: var(--dgrey); margin-bottom: 30px; }
+  .grade-badge {
+    display: inline-block;
+    padding: 10px 28px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 32px;
+  }
+  .breakdown-title { font-weight: 700; color: var(--navy); margin-bottom: 12px; font-size: 1rem; }
+  .breakdown { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 32px; }
+  .ch-score {
+    background: var(--ltblue);
+    border: 1px solid #c0d0e8;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: .9rem;
+    min-width: 140px;
+    text-align: left;
+  }
+  .ch-score .ch-name { font-weight: 700; color: var(--navy); font-size: .85rem; margin-bottom: 3px; }
+  .ch-score .ch-frac { color: var(--dgrey); }
+  #restart-btn {
+    background: var(--navy);
+    color: white;
+    border: none;
+    padding: 14px 36px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #restart-btn:hover { background: var(--blue); }
+
+  /* ── Start screen ── */
+  #start-screen {
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 48px 32px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.1);
+  }
+  #start-screen h2 { font-size: 1.5rem; color: var(--navy); margin-bottom: 14px; }
+  #start-screen p  { color: var(--dgrey); line-height: 1.7; margin-bottom: 10px; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0 30px; }
+  .tag {
+    background: var(--ltblue); border: 1px solid #b0c8e8;
+    color: var(--navy); padding: 5px 12px; border-radius: 20px; font-size: .85rem; font-weight: 600;
+  }
+  #start-btn {
+    background: var(--navy); color: white; border: none;
+    padding: 15px 44px; border-radius: 8px; font-size: 1.05rem;
+    font-weight: 700; cursor: pointer; transition: background .2s;
+  }
+  #start-btn:hover { background: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Macroeconomics 2 — Quiz</h1>
+  <p>Ecole Polytechnique · Jean-Baptiste Michau</p>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+</header>
+
+<div id="score-bar">
+  <div class="stat">📋 <span class="stat-num pending" id="stat-total">0</span> <span>answered</span></div>
+  <div class="stat">✅ <span class="stat-num correct" id="stat-correct">0</span> <span>correct</span></div>
+  <div class="stat">❌ <span class="stat-num wrong" id="stat-wrong">0</span> <span>wrong</span></div>
+</div>
+
+<main id="main-area">
+
+<!-- ══ START SCREEN ══ -->
+<div id="start-screen">
+  <h2>Ready to test yourself?</h2>
+  <p>This quiz covers all 8 lectures. Each question comes with a full explanation after you answer.</p>
+  <div class="tag-list">
+    <span class="tag">L1 · AD-AS</span>
+    <span class="tag">L2 · Consumption</span>
+    <span class="tag">L3 · Investment & Ramsey</span>
+    <span class="tag">L4 · Price Level</span>
+    <span class="tag">L5 · RBC</span>
+    <span class="tag">L6 · New Keynesian</span>
+    <span class="tag">L7 · Asset Pricing</span>
+    <span class="tag" style="background:#fff3cd;border-color:#d4a017;color:#7a5000;">★ L8 · Search Models</span>
+  </div>
+  <p><strong>25 questions</strong> · Multiple choice · Instant feedback</p>
+  <br>
+  <button id="start-btn" onclick="startQuiz()">Start Quiz →</button>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div id="quiz-area" style="display:none"></div>
+
+<!-- ══ RESULTS ══ -->
+<div id="results">
+  <h2>Quiz Complete!</h2>
+  <div id="score-display"></div>
+  <div id="score-pct"></div>
+  <div id="grade-badge-wrap"></div>
+  <p class="breakdown-title">Score by chapter:</p>
+  <div class="breakdown" id="breakdown"></div>
+  <button id="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+</div>
+
+</main>
+
+<script>
+const QUESTIONS = [
+  // ── L1 AD-AS ──────────────────────────────────────────────
+  {
+    chapter: "L1 · AD-AS",
+    text: "According to the expectations-augmented Phillips curve, what is the only way a central bank can achieve unemployment below the natural rate U*?",
+    options: [
+      "By permanently increasing the money supply",
+      "By generating unexpectedly high inflation",
+      "By lowering the nominal interest rate to zero",
+      "By raising government spending"
+    ],
+    correct: 1,
+    explanation: "The expectations-augmented Phillips curve π = πᵉ − α(U − U*) implies that U < U* only when π > πᵉ — i.e. when actual inflation exceeds expected inflation. Once agents update their expectations, the effect disappears. There is no permanent trade-off."
+  },
+  {
+    chapter: "L1 · AD-AS",
+    text: "What is the core insight of the Lucas Critique (1972)?",
+    options: [
+      "Inflation is always and everywhere a monetary phenomenon",
+      "Historical statistical relationships between macro variables break down when policy changes, because agents alter their behaviour",
+      "The central bank should follow a strict money growth rule",
+      "Fiscal policy is ineffective when Ricardian equivalence holds"
+    ],
+    correct: 1,
+    explanation: "Lucas argued that the parameters of reduced-form econometric models are not structural — they depend on the policy regime. When policy changes, rational agents adjust their expectations and behaviour, making the old model unreliable for policy evaluation. This motivated the shift to microfounded DSGE models."
+  },
+
+  // ── L2 Consumption ───────────────────────────────────────
+  {
+    chapter: "L2 · Consumption",
+    text: "The consumption Euler equation states that u′(cₜ) = β(1+r) 𝔼[u′(cₜ₊₁)]. If r = ρ (the rate of time preference), what does this imply about the consumption path?",
+    options: [
+      "Consumption grows at the rate r",
+      "Consumption is flat — the agent chooses a constant level",
+      "Consumption equals current income each period",
+      "Consumption declines over time"
+    ],
+    correct: 1,
+    explanation: "When r = ρ, we have β(1+r) = β · (1/β) = 1. The Euler equation then reads u′(cₜ) = 𝔼[u′(cₜ₊₁)], so expected marginal utility is constant over time. For a strictly concave utility function, this means expected consumption is constant — the agent perfectly smooths consumption."
+  },
+  {
+    chapter: "L2 · Consumption",
+    text: "The Permanent Income Hypothesis predicts that consumption should respond only to permanent income shocks. Empirically, however, consumption is excessively sensitive to current income. What is the main explanation offered in the lecture?",
+    options: [
+      "Agents are irrational and myopic",
+      "Liquidity constraints prevent households from borrowing against future income",
+      "The real interest rate is too high",
+      "Ricardian equivalence fails"
+    ],
+    correct: 1,
+    explanation: "Liquidity-constrained households cannot smooth consumption by borrowing when income is temporarily low. For them, consumption is limited by current income, so it responds one-for-one to current income changes — generating 'excess sensitivity'. Precautionary savings motives (u‴ > 0) also play a role."
+  },
+  {
+    chapter: "L2 · Consumption",
+    text: "The Random Walk Hypothesis (Hall 1978) says Δcₜ = εₜ. What additional assumption beyond the Permanent Income Hypothesis is needed to get this result?",
+    options: [
+      "Log utility",
+      "CRRA utility with coefficient greater than 1",
+      "Quadratic utility (so that marginal utility is linear in consumption)",
+      "CARA utility"
+    ],
+    correct: 2,
+    explanation: "With quadratic utility u(c) = c − (b/2)c², we have u′(c) = 1 − bc, which is linear in c. The Euler equation then becomes a linear equation in consumption levels, which — combined with rational expectations — yields the result that consumption follows a martingale: Δcₜ = εₜ."
+  },
+
+  // ── L3 Investment & Ramsey ────────────────────────────────
+  {
+    chapter: "L3 · Investment & Ramsey",
+    text: "In the q theory of investment with convex adjustment costs, when does a firm choose to invest?",
+    options: [
+      "When the marginal product of capital exceeds the depreciation rate",
+      "When Tobin's q (average q) is less than 1",
+      "When marginal q exceeds 1 — i.e. capital is more valuable inside than outside the firm",
+      "When the real interest rate is below the natural rate"
+    ],
+    correct: 2,
+    explanation: "Marginal q = (1/(1+r)) × 𝔼[V_K] / P. At the optimum, q = 1 + C_I/P ≥ 1. The firm invests if and only if q > 1, meaning the shadow value of an additional unit of capital (inside the firm) exceeds its market price. With q < 1, the firm would disinvest."
+  },
+  {
+    chapter: "L3 · Investment & Ramsey",
+    text: "Hayashi (1982) showed that marginal q equals Tobin's q (average q) under what condition?",
+    options: [
+      "When the production function has decreasing returns to scale",
+      "When both the production function and the adjustment cost function are homogeneous of degree 1 (CRS)",
+      "When financial markets are complete",
+      "When the capital stock is at its steady-state level"
+    ],
+    correct: 1,
+    explanation: "Under CRS in both F and C, the value function is linear in K: V(K,z) = φ(z)·K. This means V_K = φ(z) = V/K, so marginal q = V_K/P = V/(PK) = Tobin's q. This is crucial because it makes the theory empirically testable using observable stock market data."
+  },
+  {
+    chapter: "L3 · Investment & Ramsey",
+    text: "In the Ramsey model, the modified golden rule gives f′(k*) = δ + ρ, where ρ > 0. How does this compare to the 'golden rule' capital stock k^gold where f′(k^gold) = δ?",
+    options: [
+      "k* > k^gold because impatience leads to over-accumulation",
+      "k* = k^gold when the economy is in steady state",
+      "k* < k^gold because impatience (ρ > 0) means agents consume more today, accumulating less capital",
+      "k* < k^gold only if the depreciation rate is very high"
+    ],
+    correct: 2,
+    explanation: "Since f is concave (f″ < 0) and f′(k*) = δ + ρ > δ = f′(k^gold), we need k* < k^gold. The intuition: impatient agents (ρ > 0) discount the future heavily, so they choose to consume more today rather than accumulate the capital stock all the way to k^gold."
+  },
+  {
+    chapter: "L3 · Investment & Ramsey",
+    text: "Fazzari, Hubbard & Petersen (1988) found that cash flows predict investment even after controlling for Tobin's q. Why is this inconsistent with the q theory?",
+    options: [
+      "Because q theory assumes adjustment costs are linear",
+      "Because the q theory predicts that q is the only relevant variable for investment — if q is controlled for, nothing else should matter",
+      "Because cash flows should not be correlated with investment in any model",
+      "Because the q theory only applies to firms that pay dividends"
+    ],
+    correct: 1,
+    explanation: "The q theory (under its assumptions: CRS, efficient financial markets, no information asymmetry) implies q is a sufficient statistic for investment. Cash flows contain no additional information beyond what q already captures. The finding that cash flows matter — especially for low-dividend (constrained) firms — is evidence of financial frictions and information asymmetries between firms and capital markets."
+  },
+
+  // ── L4 Price Level ────────────────────────────────────────
+  {
+    chapter: "L4 · Price Level",
+    text: "The Friedman Rule states that the optimal nominal interest rate is i = 0. What is the economic intuition?",
+    options: [
+      "A zero interest rate maximises investment by firms",
+      "It eliminates the opportunity cost of holding money, which otherwise creates an inefficiency (people hold too little money relative to the social optimum)",
+      "It prevents the government from running fiscal deficits",
+      "It makes the Fisher equation hold exactly"
+    ],
+    correct: 1,
+    explanation: "Money provides liquidity services, but holding it has an opportunity cost equal to the nominal interest rate i. When i > 0, agents hold less money than is socially optimal (since money is costless to produce). Setting i = 0 (achieved via deflation at rate ρ) eliminates this wedge. In the MIU model, the FOC equates the marginal utility of money to its opportunity cost — which is zero when i = 0."
+  },
+  {
+    chapter: "L4 · Price Level",
+    text: "What does money superneutrality mean?",
+    options: [
+      "A one-time doubling of the money stock doubles all prices",
+      "A permanently higher money growth rate (μ) raises the inflation rate but leaves all real variables (output, consumption, capital) unchanged in steady state",
+      "Money has no effect on prices in the short run",
+      "Central bank credibility makes inflation expectations anchored at zero"
+    ],
+    correct: 1,
+    explanation: "Neutrality is about one-time level changes in M → proportional change in P. Superneutrality is stronger: a permanently higher rate of money growth raises the steady-state inflation rate μ, but does not affect real quantities (Y, C, K, r). This is because real variables are pinned down by technology and preferences, not by the nominal growth rate of money."
+  },
+
+  // ── L5 RBC ───────────────────────────────────────────────
+  {
+    chapter: "L5 · RBC",
+    text: "In the HP filter, what does the parameter λ control?",
+    options: [
+      "The frequency of the business cycle",
+      "The trade-off between fit to the data and smoothness of the trend — larger λ gives a smoother (less flexible) trend",
+      "The variance of the cyclical component",
+      "The autocorrelation of the trend"
+    ],
+    correct: 1,
+    explanation: "The HP filter minimises Σ(yₜ − ȳₜ)² + λΣ[(ȳₜ₊₁−ȳₜ)−(ȳₜ−ȳₜ₋₁)]². The first term penalises deviations from data; the second penalises changes in trend growth. As λ → 0, the trend equals the data (no smoothing). As λ → ∞, the trend is a straight line. The standard choice is λ = 1600 for quarterly data."
+  },
+  {
+    chapter: "L5 · RBC",
+    text: "In the special case of the RBC model (δ=1, log utility, Cobb-Douglas), how does labour supply respond to a positive TFP shock?",
+    options: [
+      "It increases, as higher productivity raises the return to working",
+      "It decreases, as higher consumption makes agents want more leisure",
+      "It stays constant — the income and substitution effects exactly cancel",
+      "It increases only if the elasticity of intertemporal substitution is greater than 1"
+    ],
+    correct: 2,
+    explanation: "With log utility and Cobb-Douglas production, the substitution effect (higher wage → work more) and the income effect (higher wealth → consume more leisure) exactly offset. Labour supply is constant at L̄, determined by the steady-state FOC. This is a special property of log utility, not a general result."
+  },
+  {
+    chapter: "L5 · RBC",
+    text: "What is the 'weak amplification mechanism' problem of the baseline RBC model?",
+    options: [
+      "The model cannot generate enough persistence in output fluctuations",
+      "Output fluctuations in the model are no larger than the underlying TFP shocks — there is no multiplier effect. Data shows GDP variance is 85% higher than TFP variance, but the model produces only 10% higher",
+      "The model predicts too much volatility in consumption",
+      "Investment is not volatile enough compared to the data"
+    ],
+    correct: 1,
+    explanation: "In the impulse response, output moves roughly one-for-one with TFP — no amplification beyond the initial shock. The data, however, shows that GDP is substantially more volatile than measured TFP (relative SD ratio ≈ 1.85 in data vs ≈ 1.10 in model). This means the model needs either unrealistically large shocks or an additional amplification mechanism, such as endogenous factor utilisation."
+  },
+  {
+    chapter: "L5 · RBC",
+    text: "What is the policy implication of the RBC model, and why does the lecture treat it critically?",
+    options: [
+      "The government should raise taxes in recessions to reduce inefficiency",
+      "Business cycles are efficient responses to productivity shocks, so stabilisation policy is welfare-reducing. But this is implausible because monetary disturbances clearly drive cycles and labour supply fluctuations are unlikely to be driven purely by intertemporal substitution",
+      "Central banks should target nominal GDP rather than inflation",
+      "Fiscal multipliers are large and stabilisation is highly effective"
+    ],
+    correct: 1,
+    explanation: "Since the RBC model implies cycles are Pareto optimal (the decentralised equilibrium = planner's optimum), there is no role for government stabilisation. But the lecture flags two implausibilities: (1) monetary disturbances are empirically important drivers of cycles; (2) the large aggregate swings in hours worked are hard to explain through intertemporal substitution alone at micro-level elasticities."
+  },
+
+  // ── L6 New Keynesian ─────────────────────────────────────
+  {
+    chapter: "L6 · New Keynesian",
+    text: "In the Calvo pricing model, what does the parameter θ represent?",
+    options: [
+      "The probability that a firm can reset its price this period",
+      "The probability that a firm CANNOT reset its price — so it keeps its old price with probability θ",
+      "The elasticity of demand for the firm's product",
+      "The share of firms that are monopolists"
+    ],
+    correct: 1,
+    explanation: "In Calvo (1983), each period a firm gets a 'green light' to reset its price with probability (1−θ), and with probability θ it must keep its current price unchanged. A higher θ means prices are stickier (change less frequently). This generates the NKPC: πₜ = β𝔼[πₜ₊₁] + κ·mcₜ, where κ = (1−θ)(1−βθ)/θ — lower θ means faster price adjustment and stronger response of inflation to marginal cost."
+  },
+  {
+    chapter: "L6 · New Keynesian",
+    text: "The Taylor Principle states that the central bank must raise the nominal interest rate by more than one-for-one with inflation (φ_π > 1 in the Taylor rule). Why is this necessary?",
+    options: [
+      "To keep the real interest rate negative during recessions",
+      "To ensure the real interest rate rises when inflation rises, thereby cooling demand and stabilising inflation. If φ_π < 1, the real rate falls when inflation rises, leading to self-fulfilling inflation spirals",
+      "To make monetary policy credible in the long run",
+      "To prevent the Zero Lower Bound from binding"
+    ],
+    correct: 1,
+    explanation: "If φ_π < 1 and inflation rises, the nominal rate rises less than one-for-one, so the real rate r = i − πᵉ actually falls. Lower real rates stimulate output, pushing inflation higher still — creating an explosive feedback loop. With φ_π > 1, the real rate rises when inflation rises, acting as an automatic stabiliser. This is the condition for equilibrium determinacy in the NK model."
+  },
+
+  // ── L7 Asset Pricing ─────────────────────────────────────
+  {
+    chapter: "L7 · Asset Pricing",
+    text: "The stochastic discount factor (SDF) is defined as Mₜ,ₜ₊₁ = β u′(cₜ₊₁)/u′(cₜ). What does a high SDF value in a given state of the world mean?",
+    options: [
+      "The economy is in a boom and consumption is high",
+      "Consumption is relatively low in that state — marginal utility is high, so an extra unit of wealth is especially valuable and assets that pay off there are worth more",
+      "The nominal interest rate is high",
+      "Inflation is above target"
+    ],
+    correct: 1,
+    explanation: "The SDF is high when u′(cₜ₊₁) is high relative to u′(cₜ), i.e. when future consumption is low (bad state). Assets that pay off precisely in these bad states are valuable insurance — investors are willing to pay a premium for them. This is why risky assets (which tend to perform poorly in bad states) must offer a higher expected return (equity premium)."
+  },
+  {
+    chapter: "L7 · Asset Pricing",
+    text: "What is Shiller's excess volatility puzzle?",
+    options: [
+      "Stock market returns are too smooth compared to dividend growth",
+      "Observed stock prices vary far more than the present value of actual dividends, violating the prediction that Var(P) ≤ Var(P*) where P* is the ex-post PDV of dividends",
+      "Interest rates are too volatile relative to inflation",
+      "The equity premium is too small to justify observed portfolio allocations"
+    ],
+    correct: 1,
+    explanation: "If stock prices equal the present value of dividends, then ex post the realised PDV P* = Σβˢ Dₜ₊ₛ should be at least as volatile as the price P (since P = 𝔼[P*]). By the law of iterated expectations, Var(P) ≤ Var(P*). Shiller found the opposite: actual prices are far more volatile than dividends. This suggests either irrational excess volatility or time-varying discount rates (risk premia)."
+  },
+  {
+    chapter: "L7 · Asset Pricing",
+    text: "In the Aiyagari (1994) model, why is the steady-state interest rate lower than in the Ramsey model (r < ρ)?",
+    options: [
+      "Because there is more capital, which drives down its marginal product",
+      "Because the government taxes capital income",
+      "Because agents face uninsurable idiosyncratic income risk. Precautionary savings push the capital supply up, driving the equilibrium return below the time preference rate ρ",
+      "Because nominal rigidities suppress the real rate"
+    ],
+    correct: 2,
+    explanation: "In the Ramsey model with complete markets, r* = ρ in steady state. In Aiyagari, agents face uninsurable labour income shocks and save extra as a buffer — a precautionary motive. This extra saving shifts the capital supply curve to the right, pushing the equilibrium interest rate below ρ. In the Ramsey world, precautionary savings are zero because agents can perfectly insure."
+  },
+
+  // ── L8 Search Models ★ ─────────────────────────────────
+  {
+    chapter: "L8 · Search Models ★",
+    text: "In the Pissarides model, what is the Job Creation (JC) condition, and where does it come from?",
+    options: [
+      "c/q(θ) = (y−w)/(r+λ), derived from the free-entry condition V = 0 and the value of a filled job J",
+      "w = φy + (1−φ)b, derived from Nash bargaining",
+      "u = λ/(λ + θq(θ)), derived from the flow equation for unemployment",
+      "q(θ) = M(u,v)/v, the definition of the vacancy-filling rate"
+    ],
+    correct: 0,
+    explanation: "Setting V = 0 (free entry: firms post vacancies until the expected profit is zero) and combining with the expression for J = (y−w)/(r+λ), we get c/q(θ) = (y−w)/(r+λ). The left side is the expected cost of filling a vacancy (cost per period c, divided by probability of filling q(θ)). The right side is the PDV of profits from a filled job."
+  },
+  {
+    chapter: "L8 · Search Models ★",
+    text: "In the Pissarides model, unemployment benefits b increase. Trace through the effect on wages w, market tightness θ, and unemployment u.",
+    options: [
+      "w ↑, θ ↑, u ↓ — higher benefits stimulate the economy",
+      "w ↑, θ ↓, u ↑ — higher benefits raise the wage (via WC), making job creation less profitable and reducing vacancies",
+      "w ↓, θ ↑, u ↓ — firms respond to higher benefits by posting more vacancies",
+      "No effect on θ or u — only wages change"
+    ],
+    correct: 1,
+    explanation: "The Wage Curve w = φ[y+cθ] + (1−φ)b shifts upward when b rises: workers have a better outside option and demand higher wages. Higher wages reduce the PDV of profit from a filled job, making vacancy posting less attractive. The JC curve c/q(θ) = (y−w)/(r+λ) implies θ falls (market tightness decreases). Lower θ means workers find jobs more slowly → unemployment rises via the Beveridge curve u = λ/(λ+θq(θ))."
+  },
+  {
+    chapter: "L8 · Search Models ★",
+    text: "What is the Hosios condition, and what does it ensure?",
+    options: [
+      "η(θ) = φ, where η is the matching elasticity w.r.t. unemployment and φ is workers' bargaining power. It ensures the decentralised equilibrium is efficient — search externalities exactly offset each other",
+      "q(θ) = θ, ensuring the matching function is symmetric",
+      "λ = φ, ensuring the separation rate equals bargaining power",
+      "r = ρ, ensuring the interest rate equals the time preference rate in steady state"
+    ],
+    correct: 0,
+    explanation: "Search markets have two externalities: (1) a congestion externality — more unemployed workers reduces other workers' finding rate; (2) a thick-market externality — more unemployed workers increases firms' filling rate. At the Hosios condition η(θ) = φ, these externalities exactly cancel and the decentralised equilibrium replicates the planner's optimum. In general, if φ > η workers have too much bargaining power → too few vacancies → inefficiently high unemployment."
+  },
+  {
+    chapter: "L8 · Search Models ★",
+    text: "In the McCall (1970) one-sided search model, what is the effect of a mean-preserving spread in the wage offer distribution F(w)?",
+    options: [
+      "It decreases the reservation wage because search becomes riskier",
+      "It has no effect on the reservation wage",
+      "It raises the reservation wage because the right tail of the distribution becomes more attractive — higher maximum offers are available",
+      "It reduces unemployment duration"
+    ],
+    correct: 2,
+    explanation: "The reservation wage w_R satisfies W(w_R) = U. With a mean-preserving spread, the distribution has a fatter right tail — there are more high-wage offers to wait for. The option value of remaining unemployed increases, raising w_R. Workers become pickier, unemployment duration increases. This is a classic option-value result: greater uncertainty can increase the value of waiting."
+  },
+  {
+    chapter: "L8 · Search Models ★",
+    text: "What is the key mechanism in the Burdett-Mortensen model that generates wage dispersion in equilibrium, even among identical workers?",
+    options: [
+      "Workers differ in unobservable productivity",
+      "On-the-job search: employed workers receive outside offers and use them to bid up wages. Firms face a trade-off between paying higher wages (attracting workers easily) and lower wages (keeping more profit), which supports a non-degenerate wage distribution",
+      "Firms have different productivity levels",
+      "The matching function has increasing returns to scale"
+    ],
+    correct: 1,
+    explanation: "In Burdett-Mortensen, all workers and firms are identical, but workers can search while employed. This means a firm that offers a low wage will lose employees to higher-wage competitors. Firms trade off wage bill (lower wage = more profit per match) against recruitment success (higher wage = attract workers from competitors). The equilibrium requires all wage offers to yield equal expected profit, which is only possible with a continuous distribution of wages — not a single wage."
+  },
+  {
+    chapter: "L8 · Search Models ★",
+    text: "In the Pissarides model, what does the Beveridge curve show, and what does an outward shift of the curve indicate?",
+    options: [
+      "It shows the negative relationship between wages and unemployment. An outward shift means wages are rising",
+      "It shows the negative relationship between vacancies v and unemployment u in steady state. An outward shift means the matching function has become less efficient — for any level of vacancies, there is more unemployment",
+      "It shows the positive relationship between output and vacancies. An outward shift means the economy is growing",
+      "It shows the trade-off between inflation and unemployment"
+    ],
+    correct: 1,
+    explanation: "The Beveridge curve u = λ/(λ+θq(θ)) traces the steady-state combinations of (u, v) — a downward-sloping locus. An outward shift (further from the origin) means matching efficiency has declined: for the same number of vacancies, unemployment is higher. This is precisely what happened after the 2008 financial crisis and again post-COVID in the US, suggesting structural changes in how workers and firms match."
+  }
+];
+
+// ── State ────────────────────────────────────────────────────
+let answered = 0, correct = 0, wrong = 0;
+let chapterScores = {};
+
+function startQuiz() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  renderQuestions();
+}
+
+function renderQuestions() {
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${i}`;
+
+    const letters = ['A', 'B', 'C', 'D'];
+    const optsHtml = q.options.map((opt, j) =>
+      `<div class="opt" id="opt-${i}-${j}" onclick="answer(${i}, ${j})">
+        <div class="opt-letter">${letters[j]}</div>
+        <div>${opt}</div>
+      </div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="chapter-badge">${q.chapter}</div>
+      <div class="q-number">Question ${i + 1} of ${QUESTIONS.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options" id="opts-${i}">${optsHtml}</div>
+      <div class="explanation" id="exp-${i}"></div>
+    `;
+    area.appendChild(card);
+  });
+}
+
+function answer(qi, chosen) {
+  const q = QUESTIONS[qi];
+  const card = document.getElementById(`card-${qi}`);
+
+  // Already answered?
+  if (card.classList.contains('answered-correct') || card.classList.contains('answered-wrong')) return;
+
+  const isCorrect = chosen === q.correct;
+
+  // Disable all options
+  for (let j = 0; j < q.options.length; j++) {
+    const opt = document.getElementById(`opt-${qi}-${j}`);
+    opt.classList.add('disabled');
+    if (j === q.correct && !isCorrect) opt.classList.add('show-correct');
+  }
+
+  // Mark chosen
+  const chosenOpt = document.getElementById(`opt-${qi}-${chosen}`);
+  chosenOpt.classList.add(isCorrect ? 'correct-ans' : 'wrong-ans');
+
+  // Card border
+  card.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+
+  // Explanation
+  const exp = document.getElementById(`exp-${qi}`);
+  exp.className = `explanation ${isCorrect ? 'correct' : 'wrong'}`;
+  exp.innerHTML = `<div class="verdict">${isCorrect ? '✅ Correct!' : '❌ Incorrect'}</div>${q.explanation}`;
+  exp.style.display = 'block';
+
+  // Stats
+  answered++;
+  if (isCorrect) correct++; else wrong++;
+
+  const ch = q.chapter;
+  if (!chapterScores[ch]) chapterScores[ch] = { correct: 0, total: 0 };
+  chapterScores[ch].total++;
+  if (isCorrect) chapterScores[ch].correct++;
+
+  document.getElementById('stat-total').textContent = answered;
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-wrong').textContent = wrong;
+
+  // Progress
+  document.getElementById('progress-bar').style.width =
+    `${(answered / QUESTIONS.length) * 100}%`;
+
+  // Scroll to next
+  const next = document.getElementById(`card-${qi + 1}`);
+  if (next) setTimeout(() => next.scrollIntoView({ behavior: 'smooth', block: 'center' }), 400);
+
+  // Show results when all done
+  if (answered === QUESTIONS.length) setTimeout(showResults, 800);
+}
+
+function showResults() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('score-bar').style.display = 'none';
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+
+  document.getElementById('score-display').textContent = `${correct} / ${QUESTIONS.length}`;
+  const pct = Math.round((correct / QUESTIONS.length) * 100);
+  document.getElementById('score-pct').textContent = `${pct}% correct`;
+
+  let grade, color, bg;
+  if (pct >= 88)      { grade = '🏆 Excellent!';     color = '#1a5c30'; bg = '#d4edda'; }
+  else if (pct >= 72) { grade = '👍 Good job!';       color = '#4a5c1a'; bg = '#f0f4d4'; }
+  else if (pct >= 56) { grade = '📚 Keep studying';   color = '#7a4a00'; bg = '#fff3cd'; }
+  else                { grade = '💪 More revision needed'; color = '#7a1a1a'; bg = '#f8d7da'; }
+
+  const badge = document.getElementById('grade-badge-wrap');
+  badge.innerHTML = `<div class="grade-badge" style="background:${bg};color:${color}">${grade}</div>`;
+
+  // Chapter breakdown
+  const breakdown = document.getElementById('breakdown');
+  breakdown.innerHTML = '';
+  Object.entries(chapterScores).forEach(([ch, sc]) => {
+    const div = document.createElement('div');
+    div.className = 'ch-score';
+    const pctCh = Math.round((sc.correct / sc.total) * 100);
+    div.innerHTML = `<div class="ch-name">${ch}</div><div class="ch-frac">${sc.correct}/${sc.total} (${pctCh}%)</div>`;
+    breakdown.appendChild(div);
+  });
+
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function restartQuiz() {
+  answered = 0; correct = 0; wrong = 0;
+  chapterScores = {};
+  document.getElementById('stat-total').textContent = '0';
+  document.getElementById('stat-correct').textContent = '0';
+  document.getElementById('stat-wrong').textContent = '0';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('score-bar').style.display = 'flex';
+  document.getElementById('quiz-area').style.display = 'block';
+  renderQuestions();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
